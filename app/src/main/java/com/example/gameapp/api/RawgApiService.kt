@@ -1,5 +1,6 @@
 package com.example.gameapp.api
 
+import com.example.gameapp.Model.GameListResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
