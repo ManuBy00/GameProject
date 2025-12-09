@@ -4,9 +4,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetroFitClient {
-    // La URL base de la API de RAWG (Corregido el formato del enlace)
-    private const val BASE_URL = "[https://api.rawg.io/api/](https://api.rawg.io/api/)"
-
+    // La URL base de la API de RAWG
+    private const val BASE_URL = "https://api.rawg.io/api/"
+    private const val DETAILS_URL = "https://api.rawg.io/api/games/{id}"
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)

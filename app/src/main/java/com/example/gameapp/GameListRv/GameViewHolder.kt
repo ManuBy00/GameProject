@@ -9,12 +9,18 @@ import coil.load
 import com.example.gameapp.Model.Game
 import com.example.gameapp.R
 
-class GameViewHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
+class GameViewHolder (
+    itemView: View,
+    private val onClick: (Game) -> Unit) : RecyclerView.ViewHolder(itemView) {
     val imageViewGameBackground: ImageView = itemView.findViewById(R.id.ivGameBackground)
     val tvGameName: TextView = itemView.findViewById(R.id.tvGameName)
 
     fun bind(game: Game){
         tvGameName.text= game.name
+
+        itemView.setOnClickListener {
+            onClick(game) // Llama al callback, pasando el objeto Game clicado
+        }
 
         // Carga la imagen desde la URL usando Coil.
         imageViewGameBackground.load(game.backgroundImage) {
@@ -24,6 +30,8 @@ class GameViewHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
             placeholder(R.drawable.ic_launcher_background)
             //imagen por defecto en caso de error
             error(R.drawable.ic_launcher_background)
+
+
         }
     }
 

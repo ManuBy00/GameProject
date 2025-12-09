@@ -37,10 +37,8 @@ android {
     buildFeatures {
         viewBinding = true // HABILITAR BINDING
     }
+
 }
-
-
-
 
 dependencies {
 
@@ -53,7 +51,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+
+
     // ... otras dependencias
+    //holograph
+    implementation("org.quanqi:android-holo-graph:0.1.0")
 
 // Retrofit (Librería para peticiones HTTP)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

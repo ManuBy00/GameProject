@@ -8,12 +8,12 @@ import com.example.gameapp.Model.Game
 import com.example.gameapp.R
 
 
-class GameAdapter : ListAdapter<Game, GameViewHolder>(GameDiffCallback()){
+class GameAdapter (private val onClick: (Game) -> Unit) : ListAdapter<Game, GameViewHolder>(GameDiffCallback()){
     // onCreateViewHolder: Infla el layout del elemento
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GameViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_game, parent, false)
-        return GameViewHolder(view)
+        return GameViewHolder(view, onClick)
     }
 
     // onBindViewHolder: Vincula los datos con las vistas del ViewHolder

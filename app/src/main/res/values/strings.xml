@@ -1,3 +1,15 @@
 <resources>
-    <string name="app_name">GameApp</string>
+    <string name="app_name">LOGIN</string>
+    <string name="loginButton">Iniciar sesión</string>
+    <string name="registrarText">¿Aún no tienes cuenta? Registrate aquí</string>
+    <string name="nombreUsuario">nombre de usuario</string>
+    <string name="gmail">E-mail</string>
+    <string name="password">Contraseña</string>
+    <string name="password2">Confirmar contraseña</string>
+    <string name="t1Login">Game Reviewer</string>
+    <string name="t1Reg">Registrar usuario</string>
+    <string name="registrarButton">Registrar</string>
+    <string name="textoBienvenido">Bienvenido</string>
+    <string name="cerrarSesionButton">Cerrar Sesión</string>
+    <string name="saludo">¡Hola, %s!</string>
 </resources>

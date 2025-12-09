@@ -2,4 +2,17 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="blanco_fondo">#FFFFFF</color>
+
+    <color name="gris_texto_oscuro">#343A40</color>
+
+    <color name="verde_exito">#28A745</color>
+
+    <color name="gris_borde_claro">#E9ECEF</color>
+
+    <color name="azul_principal">#0077B6</color>
+    <color name="gris_fondo_dark">#1E1E1E</color>
+    <color name="gris_claro_input">#F5F5F5</color>
+    <color name="rojo_accent">#E53935</color>
 </resources>
