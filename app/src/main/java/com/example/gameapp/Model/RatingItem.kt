@@ -13,3 +13,4 @@ data class RatingItem(
     @SerializedName("count") val count: Int,         // Número de votos
     @SerializedName("percent") val percent: Double   // Porcentaje de votos
 ) : Serializable
+

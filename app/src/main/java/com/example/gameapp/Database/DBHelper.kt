@@ -116,6 +116,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
         val genresString = apiGame.genres.joinToString(separator = ", ") {
             it.name
         }
+        val developerName = apiGame.developer.firstOrNull()?.name ?: "N/A"
 
         //  Mapear el objeto Game a ContentValues (Añadiendo released y developer)
         val values = ContentValues().apply {
@@ -125,7 +126,7 @@ class DBHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null
             put(COL_GAME_GENRES, genresString)
             // Añadiendo los nuevos campos
             put(COL_GAME_RELEASED, apiGame.released)
-            put(COL_GAME_DEVELOPER, apiGame.developer)
+            put(COL_GAME_DEVELOPER, developerName)
             put(COL_GAME_RATING, apiGame.rating)
         }
 

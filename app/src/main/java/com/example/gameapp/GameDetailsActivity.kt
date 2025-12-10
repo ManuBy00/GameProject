@@ -2,15 +2,16 @@ package com.example.gameapp
 
 import android.graphics.Color
 import android.os.Bundle
-import android.view.View // Se necesita para View.VISIBLE/GONE
+import android.util.Log // Importar para logs de depuración
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider // Importamos ViewModelProvider
+import androidx.lifecycle.ViewModelProvider
 import coil.load
 import com.echo.holographlibrary.Bar
 import com.example.gameapp.Model.Game
 import com.example.gameapp.Model.RatingItem
 import com.example.gameapp.Utils.Constants
-import com.example.gameapp.api.GameViewModel // Correcto: la clase que extiende AndroidViewModel
+import com.example.gameapp.api.GameViewModel
 import com.example.gameapp.databinding.GameDetailsBinding
 import java.util.Locale
 import kotlin.collections.ArrayList
@@ -24,7 +25,6 @@ class GameDetailsActivity : AppCompatActivity() {
     // Clave de API obtenida de tus constantes
     private val API_KEY = Constants.constants.RAWG_API_KEY
 
-    // 1. Declaramos el ViewModel
     private lateinit var viewModel: GameViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,21 +33,39 @@ class GameDetailsActivity : AppCompatActivity() {
         binding = GameDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 2. Inicialización del ViewModel usando ViewModelProvider (el Factory por defecto
-        // para AndroidViewModel maneja la dependencia de Application)
-        viewModel = ViewModelProvider(this).get(GameViewModel::class.java)
+        // Inicialización del ViewModel
+        try {
+            viewModel = ViewModelProvider(this).get(GameViewModel::class.java)
+        } catch (e: Exception) {
+            // Error al inicializar el ViewModel (posiblemente por inyección fallida)
+            binding.errorTextView.text = "Error al inicializar el ViewModel: ${e.message}"
+            binding.errorTextView.visibility = View.VISIBLE
+            Log.e("GameDetailActivity", "ViewModel init failed: ${e.message}")
+            return
+        }
 
-        // 3. OBTENER EL ID del juego de los extras del Intent
-        val gameId = intent.getIntExtra("game_id", -1)
+        // 1. RECUPERAR EL OBJETO GAME DEL INTENT (la versión sin ratings)
+        val initialGame = intent.getSerializableExtra("game") as? Game
 
-        // 4. Iniciar la observación de los datos
-        observeViewModel()
+        // 2. Mostrar la información básica inmediatamente
+        if (initialGame != null) {
+            this.game = initialGame
+            displayDetails(initialGame)
 
-        if (gameId != -1) {
-            // 5. Cargar los detalles completos del juego desde la API
+            // 3. Obtener el ID para buscar los detalles completos con ratings
+            val gameId = initialGame.id
+
+            // 4. Iniciar la observación del ViewModel
+            observeViewModel()
+
+            // 5. Llamar a la API para obtener la versión completa (con ratings)
             viewModel.loadGameDetails(gameId, API_KEY)
-        } else {
 
+        } else {
+            // Error si el objeto inicial no se pasa correctamente
+            binding.errorTextView.text = "Error: Detalles básicos del juego no encontrados."
+            binding.errorTextView.visibility = View.VISIBLE
+            binding.detailsContainer.visibility = View.GONE
         }
     }
 
@@ -58,12 +76,12 @@ class GameDetailsActivity : AppCompatActivity() {
 
         // --- A. Observar estado de carga ---
         viewModel.isLoading.observe(this) { isLoading ->
-            // Si isLoading es true, mostramos el indicador y ocultamos el resto
-            val showLoading = isLoading ?: false // Usamos false si es null
+            val showLoading = isLoading ?: false
             binding.loadingIndicator.visibility = if (showLoading) View.VISIBLE else View.GONE
 
-            // Ocultamos el contenedor principal si estamos cargando o hay un error
-            if (showLoading) {
+            // Ocultamos el contenedor principal si estamos cargando, a menos que ya tengamos
+            // datos iniciales mostrándose.
+            if (showLoading && this.game == null) {
                 binding.detailsContainer.visibility = View.GONE
             }
         }
@@ -73,7 +91,8 @@ class GameDetailsActivity : AppCompatActivity() {
             if (errorMessage != null) {
                 binding.errorTextView.text = "Error de carga: $errorMessage"
                 binding.errorTextView.visibility = View.VISIBLE
-                binding.detailsContainer.visibility = View.GONE // Ocultar detalles al mostrar error
+                binding.detailsContainer.visibility = View.GONE // Ocultar detalles ante error de red
+                Log.e("GameDetailActivity", "API Error: $errorMessage")
             } else {
                 binding.errorTextView.visibility = View.GONE
             }
@@ -81,35 +100,45 @@ class GameDetailsActivity : AppCompatActivity() {
 
         // --- C. Observar los detalles del juego (Game) ---
         viewModel.gameDetails.observe(this) { fetchedGame ->
-            this.game = fetchedGame // Guardar el objeto completo localmente
 
             if (fetchedGame != null) {
-                // 4. Mostrar los detalles y el gráfico
-                displayDetails(fetchedGame)
-                setGraph()
+                // ÉXITO: Los datos completos (incluyendo ratings) han llegado.
+                this.game = fetchedGame // SOBREESCRIBIR la versión inicial
 
-                // Aseguramos que se muestre el contenedor principal y se oculte el error
+                displayDetails(fetchedGame) // Actualizar detalles por si algo cambió
+                setGraph() // Dibujar el gráfico con los datos completos
+
+                // Mostrar la vista principal y ocultar el indicador de carga/error
                 binding.detailsContainer.visibility = View.VISIBLE
                 binding.errorTextView.visibility = View.GONE
-            } else if (viewModel.error.value == null) {
-                // Caso donde es null pero no hay un error específico (ej. inicio)
-                binding.detailsContainer.visibility = View.GONE
+
+                Log.d("GameDetailActivity", "Detalles cargados. Ratings count: ${fetchedGame.ratings.size}")
+
+            } else if (viewModel.error.value == null && viewModel.isLoading.value == false) {
+                // Caso donde la llamada terminó sin datos y sin error explícito (raro, pero posible)
+                binding.errorTextView.text = "No se pudieron obtener los detalles completos."
+                binding.errorTextView.visibility = View.VISIBLE
             }
         }
     }
 
     fun displayDetails(game: Game) {
+        // Asegurarse de que el contenedor principal es visible cuando mostramos los datos.
+        binding.detailsContainer.visibility = View.VISIBLE
+
         binding.textViewTitle.text = game.name
         binding.textViewScore.text = "Puntuación : ${game.rating}"
-        binding.textViewDeveloper.text = "Desarrollador : ${game.developer}"
+        binding.textViewDeveloper.text = "Desarrollador : ${game.developer.toString()}"
         val genresString = game.genres.joinToString(", ") { it.name }
         binding.textViewGenre.text = "Género: $genresString"
         binding.textViewReleaseDate.text = "Lanzamiento: ${game.released}"
 
         binding.imageViewCover.load(game.backgroundImage) {
             crossfade(true)
-            // Agrega tu recurso de fallback aquí si es necesario, por ejemplo:
-            // error(R.drawable.placeholder_game)
+            // error(R.drawable.logo_app)
+        }
+        binding.btnBack.setOnClickListener {
+            finish()
         }
     }
 
@@ -121,14 +150,18 @@ class GameDetailsActivity : AppCompatActivity() {
         // Asegurarse de que el objeto Game está disponible
         val currentGame = this.game ?: return
 
+        // Si la lista de ratings está vacía, ocultar el gráfico
+        if (currentGame.ratings.isEmpty()) {
+            binding.barGraph.visibility = View.GONE
+            return
+        }
+
         // Definir un mapa de colores para las categorías de puntuación
         val colorMap = mapOf(
-            // Colores basados en la semántica de la puntuación
             "exceptional" to Color.parseColor("#4CAF50"), // Verde (Excelente)
             "recommended" to Color.parseColor("#FFC107"), // Amarillo (Recomendado)
             "meh" to Color.parseColor("#FF9800"),        // Naranja (Aceptable)
             "skip" to Color.parseColor("#F44336")        // Rojo (Evitar)
-            // Cualquier otro se manejará con el color por defecto
         )
 
         val bars = ArrayList<Bar>()
@@ -151,14 +184,7 @@ class GameDetailsActivity : AppCompatActivity() {
         }
 
         // 5. Asignar la lista de barras al BarGraph
-        if (bars.isNotEmpty()) {
-            binding.barGraph.bars = bars
-            binding.barGraph.visibility = View.VISIBLE
-            // Opcional: Animar las barras si la librería lo soporta
-            // binding.barGraph.animateToGoalValues()
-        } else {
-            // Ocultar el gráfico si no hay datos
-            binding.barGraph.visibility = View.GONE
-        }
+        binding.barGraph.bars = bars
+        binding.barGraph.visibility = View.VISIBLE
     }
 }
